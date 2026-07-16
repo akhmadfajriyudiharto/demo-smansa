@@ -9,7 +9,7 @@
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
         input[type="text"] { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
         button { padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #4285F4; color: white; border: none; border-radius: 4px; }
-        
+        button:disabled { background-color: #999; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -26,42 +26,75 @@
         <p>3. Kalau dikasih 1 Miliar, proyek apa yang pertama kamu buat?</p>
         <input type="text" id="q3" placeholder="Jawabanmu...">
         <br><br>
-        <button onclick="kirimData()">Pindai Masa Depan!</button>
+        <!-- Hapus onclick inline, gunakan event listener di JavaScript -->
+        <button id="btnKirim">Pindai Masa Depan!</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-        // Ganti dengan Config Firebase milikmu
-        const firebaseConfig = { apiKey: "AIzaSyAktzwAQmKT4TvzIytFnGeJDZVbbGyII_c", authDomain: "PROJECT.firebaseapp.com", projectId: "PROJECT_ID" };
+        // Pastikan mengganti ini dengan Config Firebase milikmu yang asli
+        const firebaseConfig = { 
+            apiKey: "API_KEY_KAMU", 
+            authDomain: "PROJECT.firebaseapp.com", 
+            projectId: "PROJECT_ID" 
+        };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         let namaSiswa = "Siswa Smansa";
 
-        window.kirimData = async () => {
-            const krisis = document.getElementById("q1").value;
-            const strategi = document.getElementById("q2").value;
-            const visi = document.getElementById("q3").value;
+        const btnKirim = document.getElementById("btnKirim");
 
-            if (!krisis || !strategi || !visi) return alert("Isi semua pertanyaan, ya!");
+        btnKirim.addEventListener("click", async () => {
+            // Gunakan .trim() untuk mencegah spasi kosong dianggap sebagai jawaban
+            const krisis = document.getElementById("q1").value.trim();
+            const strategi = document.getElementById("q2").value.trim();
+            const visi = document.getElementById("q3").value.trim();
+
+            if (!krisis || !strategi || !visi) {
+                return alert("Isi semua pertanyaan, ya!");
+            }
+
+            // Ubah state tombol agar user tidak klik berkali-kali (spam)
+            btnKirim.disabled = true;
+            btnKirim.textContent = "Memproses...";
 
             try {
                 // Menyimpan data mentah ke Firestore
                 const docRef = await addDoc(collection(db, "sensus_input"), {
-                    nama: namaSiswa, krisis: krisis, strategi: strategi, visi: visi, status_proses: "belum", waktu: serverTimestamp()
+                    nama: namaSiswa, 
+                    krisis: krisis, 
+                    strategi: strategi, 
+                    visi: visi, 
+                    status_proses: "belum", 
+                    waktu: serverTimestamp()
                 });
                 
                 // Memicu alur kerja Google Cloud Workflows via Webhook HTTP POST
-                // Pastikan kamu mengganti URL_WEBHOOK_WORKFLOWS_KAMU dengan URL eksekusi dari GCP
-                await fetch("https://workflowexecutions.googleapis.com/v1/projects/project-18c7f4fc-5196-445e-ab9/locations/asia-southeast2/workflows/sensus-rpg/executions", {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ argument: JSON.stringify({ id_dokumen: docRef.id, nama: namaSiswa, krisis: krisis, strategi: strategi, visi: visi }) })
+                // Ganti URL di bawah dengan URL Cloud Function atau API Gateway kamu.
+                const webhookUrl = "URL_WEBHOOK_CLOUD_FUNCTION_KAMU";
+                
+                await fetch(webhookUrl, {
+                    method: "POST", 
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        id_dokumen: docRef.id, 
+                        nama: namaSiswa, 
+                        krisis: krisis, 
+                        strategi: strategi, 
+                        visi: visi 
+                    })
                 });
 
                 document.getElementById("formSensus").innerHTML = "<h3>✅ Datamu sedang diproses oleh AI! Lihat ke layar proyektor!</h3>";
-            } catch (error) { console.error("Error: ", error); }
-        };
+            } catch (error) { 
+                console.error("Error: ", error); 
+                alert("Terjadi kesalahan saat mengirim data.");
+                btnKirim.disabled = false;
+                btnKirim.textContent = "Pindai Masa Depan!";
+            }
+        });
     </script>
 </body>
 </html>
