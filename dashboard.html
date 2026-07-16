@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live AI Radar - Panggung</title>
+    <style>
+        body { background-color: #0d1117; color: #00ff66; font-family: 'Courier New', Courier, monospace; padding: 30px; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: #161b22; border: 1px solid #00ff66; border-radius: 8px; padding: 20px; box-shadow: 0 4px 10px rgba(0,255,102,0.2); }
+        .title { color: #ffffff; font-size: 1.2em; border-bottom: 1px solid #30363d; padding-bottom: 5px; margin-bottom: 10px; }
+        .highlight { color: #ff3366; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">🛰️ RADAR PREDIKSI MASA DEPAN LIVE 🛰️</h1>
+    <hr style="border: 0.5px solid #30363d; margin-bottom: 30px;">
+    
+    <div class="grid-container" id="board"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getFirestore, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+        // Gunakan Config Firebase yang sama
+        const firebaseConfig = { apiKey: "AIzaSyAktzwAQmKT4TvzIytFnGeJDZVbbGyII_c", authDomain: "PROJECT.firebaseapp.com", projectId: "PROJECT_ID" };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Hanya menampilkan data yang statusnya sudah "selesai" diproses AI
+        const q = query(collection(db, "sensus_input"), where("status_proses", "==", "selesai"));
+        onSnapshot(q, (snapshot) => {
+            const board = document.getElementById("board");
+            board.innerHTML = ""; 
+            
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const rawAnalisis = data.analisis_ai.replace(/\n/g, "<br>");
+                const formattedAnalisis = rawAnalisis.replace("Tapi jika tidak fokus belajar anda akan jadi:", "<br><span class='highlight'>Tapi jika tidak fokus belajar anda akan jadi:</span>");
+
+                const card = document.createElement("div");
+                card.className = "card";
+                card.innerHTML = `
+                    <div class="title">👤 ${data.nama}</div>
+                    <p style="color: #8b949e; font-size: 0.9em;">Misi Visi: "${data.visi}"</p>
+                    <p>${formattedAnalisis}</p>
+                `;
+                board.appendChild(card);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mega-Sensus Masa Depan</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input[type="text"] { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #4285F4; color: white; border: none; border-radius: 4px; }
+        #formSensus { display: none; } /* Disembunyikan sebelum login */
+    </style>
+</head>
+<body>
+    <h1>🚀 Radar Masa Depan Gen Z</h1>
+
+    <div class="card" id="loginArea">
+        <p>Login pakai akun Google-mu untuk memulai pemindaian!</p>
+        <button onclick="loginSiswa()">Masuk dengan Google</button>
+    </div>
+
+    <div class="card" id="formSensus">
+        <h3 id="sapaanSiswa"></h3>
+        <p>1. Kalau internet mati sebulan, peran apa yang kamu ambil di sekolah?</p>
+        <input type="text" id="q1" placeholder="Jawabanmu...">
+        
+        <p>2. Pelajaran apa yang pengen kamu hack biar langsung paham?</p>
+        <input type="text" id="q2" placeholder="Jawabanmu...">
+        
+        <p>3. Kalau dikasih 1 Miliar, proyek apa yang pertama kamu buat?</p>
+        <input type="text" id="q3" placeholder="Jawabanmu...">
+        <br><br>
+        <button onclick="kirimData()">Pindai Masa Depan!</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+        // Ganti dengan Config Firebase milikmu
+        const firebaseConfig = { apiKey: "AIzaSyAktzwAQmKT4TvzIytFnGeJDZVbbGyII_c", authDomain: "PROJECT.firebaseapp.com", projectId: "PROJECT_ID" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        let namaSiswa = "Anonim";
+
+        window.loginSiswa = async () => {
+            try {
+                const result = await signInWithPopup(auth, new GoogleAuthProvider());
+                namaSiswa = result.user.displayName;
+                document.getElementById("loginArea").style.display = "none";
+                document.getElementById("formSensus").style.display = "block";
+                document.getElementById("sapaanSiswa").innerText = `Halo, ${namaSiswa}! Siap melihat masa depanmu?`;
+            } catch (error) { alert("Gagal login!"); }
+        };
+
+        window.kirimData = async () => {
+            const krisis = document.getElementById("q1").value;
+            const strategi = document.getElementById("q2").value;
+            const visi = document.getElementById("q3").value;
+
+            if (!krisis || !strategi || !visi) return alert("Isi semua pertanyaan, ya!");
+
+            try {
+                // Menyimpan data mentah ke Firestore
+                const docRef = await addDoc(collection(db, "sensus_input"), {
+                    nama: namaSiswa, krisis: krisis, strategi: strategi, visi: visi, status_proses: "belum", waktu: serverTimestamp()
+                });
+                
+                // Memicu alur kerja Google Cloud Workflows via Webhook HTTP POST
+                // Pastikan kamu mengganti URL_WEBHOOK_WORKFLOWS_KAMU dengan URL eksekusi dari GCP
+                await fetch("https://workflowexecutions.googleapis.com/v1/projects/project-18c7f4fc-5196-445e-ab9/locations/asia-southeast2/workflows/sensus-rpg/executions", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ argument: JSON.stringify({ id_dokumen: docRef.id, nama: namaSiswa, krisis: krisis, strategi: strategi, visi: visi }) })
+                });
+
+                document.getElementById("formSensus").innerHTML = "<h3>✅ Datamu sedang diproses oleh AI! Lihat ke layar proyektor!</h3>";
+            } catch (error) { console.error("Error: ", error); }
+        };
+    </script>
+</body>
+</html>
