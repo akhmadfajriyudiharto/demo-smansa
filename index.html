@@ -62,7 +62,7 @@
 
             try {
                 // Menyimpan data mentah ke Firestore
-                const docRef = await addDoc(collection(db, "sensus_input"), {
+                const docRef = await addDoc(collection(db, "input"), {
                     nama: namaSiswa, 
                     krisis: krisis, 
                     strategi: strategi, 
@@ -71,21 +71,21 @@
                     waktu: serverTimestamp()
                 });
                 
-                // Memicu alur kerja Google Cloud Workflows via Webhook HTTP POST
-                // Ganti URL di bawah dengan URL Cloud Function atau API Gateway kamu.
-                const webhookUrl = "https://workflowexecutions.googleapis.com/v1/projects/project-18c7f4fc-5196-445e-ab9/locations/asia-southeast2/workflows/sensus-rpg/executions";
+                // // Memicu alur kerja Google Cloud Workflows via Webhook HTTP POST
+                // // Ganti URL di bawah dengan URL Cloud Function atau API Gateway kamu.
+                // const webhookUrl = "https://workflowexecutions.googleapis.com/v1/projects/project-18c7f4fc-5196-445e-ab9/locations/asia-southeast2/workflows/sensus-rpg/executions";
                 
-                await fetch(webhookUrl, {
-                    method: "POST", 
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                        id_dokumen: docRef.id, 
-                        nama: namaSiswa, 
-                        krisis: krisis, 
-                        strategi: strategi, 
-                        visi: visi 
-                    })
-                });
+                // await fetch(webhookUrl, {
+                //     method: "POST", 
+                //     headers: { "Content-Type": "application/json" },
+                //     body: JSON.stringify({ 
+                //         id_dokumen: docRef.id, 
+                //         nama: namaSiswa, 
+                //         krisis: krisis, 
+                //         strategi: strategi, 
+                //         visi: visi 
+                //     })
+                // });
 
                 document.getElementById("formSensus").innerHTML = "<h3>✅ Datamu sedang diproses oleh AI! Lihat ke layar proyektor!</h3>";
             } catch (error) { 
